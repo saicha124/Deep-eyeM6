@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, List
 from jinja2 import Template
 from utils.logger import get_logger
+from core.remediation_guide import RemediationGuide
 
 logger = get_logger(__name__)
 
@@ -52,6 +53,10 @@ class ReportGenerator:
         template_content = self._get_html_template()
         template = Template(template_content)
         
+        # Enhance vulnerabilities with detailed remediation
+        vulnerabilities = results.get('vulnerabilities', [])
+        enhanced_vulns = [RemediationGuide.enhance_vulnerability(v.copy()) for v in vulnerabilities]
+        
         # Prepare data for template
         report_data = {
             'title': 'Deep Eye Security Assessment Report',
@@ -59,7 +64,7 @@ class ReportGenerator:
             'target': results.get('target'),
             'scan_duration': results.get('duration'),
             'summary': self._generate_summary(results),
-            'vulnerabilities': self._sort_vulnerabilities(results.get('vulnerabilities', [])),
+            'vulnerabilities': self._sort_vulnerabilities(enhanced_vulns),
             'severity_counts': results.get('severity_summary', {}),
             'urls_scanned': results.get('urls_crawled', 0),
             'reconnaissance': results.get('reconnaissance', {}),
@@ -82,6 +87,11 @@ class ReportGenerator:
             from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
             from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
             from xml.sax.saxutils import escape
+            
+            # Enhance vulnerabilities with detailed remediation
+            vulnerabilities = results.get('vulnerabilities', [])
+            enhanced_vulns = [RemediationGuide.enhance_vulnerability(v.copy()) for v in vulnerabilities]
+            results['vulnerabilities'] = enhanced_vulns
             
             # Create PDF document
             doc = SimpleDocTemplate(output_path, pagesize=letter)
@@ -236,22 +246,59 @@ class ReportGenerator:
                     vuln_title = f"<b>{vuln_type}</b> - {vuln_severity}"
                     story.append(Paragraph(vuln_title, styles['Heading3']))
                     
+                    # Timestamp if available
+                    if vuln.get('timestamp'):
+                        timestamp_text = f"<i>Discovered: {escape(str(vuln.get('timestamp')))}</i>"
+                        story.append(Paragraph(timestamp_text, styles['BodyText']))
+                    
                     # Vulnerability details (escape special characters)
                     vuln_url = escape(str(vuln.get('url', 'N/A')))
                     vuln_param = escape(str(vuln.get('parameter', 'N/A')))
                     vuln_desc = escape(str(vuln.get('description', 'N/A')))
                     vuln_evidence = escape(str(vuln.get('evidence', 'N/A'))[:200])  # Limit evidence length
-                    vuln_remediation = escape(str(vuln.get('remediation', 'N/A')))
+                    vuln_cwe = escape(str(vuln.get('cwe', 'N/A')))
                     
                     vuln_details = f"""
                     <b>URL:</b> {vuln_url}<br/>
                     <b>Parameter:</b> {vuln_param}<br/>
+                    <b>CWE:</b> {vuln_cwe}<br/>
                     <b>Description:</b> {vuln_desc}<br/>
-                    <b>Evidence:</b> {vuln_evidence}<br/>
-                    <b>Remediation:</b> {vuln_remediation}
+                    <b>Evidence:</b> {vuln_evidence}
                     """
                     story.append(Paragraph(vuln_details, styles['BodyText']))
-                    story.append(Spacer(1, 0.2*inch))
+                    story.append(Spacer(1, 0.1*inch))
+                    
+                    # Enhanced remediation details
+                    remediation_details = vuln.get('remediation_details', {})
+                    if remediation_details:
+                        priority = remediation_details.get('priority', 'MEDIUM')
+                        fix_time = remediation_details.get('fix_time', 'N/A')
+                        
+                        story.append(Paragraph(f"<b>Remediation Guidance</b>", styles['Heading4']))
+                        story.append(Paragraph(f"<b>Priority:</b> {priority} | <b>Estimated Fix Time:</b> {fix_time}", styles['BodyText']))
+                        story.append(Spacer(1, 0.05*inch))
+                        
+                        # Remediation steps
+                        steps = remediation_details.get('steps', [])
+                        if steps:
+                            story.append(Paragraph("<b>Steps to Fix:</b>", styles['BodyText']))
+                            for i, step in enumerate(steps[:5], 1):  # Limit to 5 steps for PDF
+                                step_text = f"{i}. {escape(str(step))}"
+                                story.append(Paragraph(step_text, styles['BodyText']))
+                            story.append(Spacer(1, 0.05*inch))
+                        
+                        # References
+                        references = remediation_details.get('references', [])
+                        if references:
+                            story.append(Paragraph("<b>References:</b>", styles['BodyText']))
+                            for ref in references[:3]:  # Limit to 3 references for PDF
+                                ref_text = f"• {escape(str(ref))}"
+                                story.append(Paragraph(ref_text, styles['BodyText']))
+                    else:
+                        vuln_remediation = escape(str(vuln.get('remediation', 'N/A')))
+                        story.append(Paragraph(f"<b>Remediation:</b> {vuln_remediation}", styles['BodyText']))
+                    
+                    story.append(Spacer(1, 0.3*inch))
             else:
                 story.append(Paragraph("No vulnerabilities detected.", styles['BodyText']))
             
@@ -444,6 +491,76 @@ class ReportGenerator:
             overflow-x: auto;
             font-family: 'Courier New', monospace;
             margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        
+        .remediation-section {
+            background: #f0f8ff;
+            border: 1px solid #4a90e2;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        
+        .remediation-section h4 {
+            color: #4a90e2;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .remediation-steps {
+            margin: 15px 0;
+        }
+        
+        .remediation-steps ol {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+        
+        .remediation-steps li {
+            margin: 8px 0;
+        }
+        
+        .priority-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85em;
+            margin: 5px 0;
+        }
+        
+        .priority-critical {
+            background: #8B0000;
+            color: white;
+        }
+        
+        .priority-high {
+            background: #FF4500;
+            color: white;
+        }
+        
+        .priority-medium {
+            background: #FFA500;
+            color: white;
+        }
+        
+        .references {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-left: 3px solid #4a90e2;
+        }
+        
+        .references ul {
+            margin-left: 20px;
+            margin-top: 5px;
+        }
+        
+        .timestamp {
+            color: #666;
+            font-size: 0.85em;
+            font-style: italic;
         }
         
         .recon-subsection {
@@ -581,20 +698,70 @@ class ReportGenerator:
                 {% for vuln in vulnerabilities %}
                 <div class="vulnerability {{ vuln.severity }}">
                     <h3>{{ vuln.type }}</h3>
+                    {% if vuln.timestamp %}
+                    <p class="timestamp">🕐 Discovered: {{ vuln.timestamp }}</p>
+                    {% endif %}
                     <div class="vulnerability-meta">
                         <span><strong>Severity:</strong> {{ vuln.severity|upper }}</span>
                         <span><strong>URL:</strong> {{ vuln.url }}</span>
                         {% if vuln.parameter %}
                         <span><strong>Parameter:</strong> {{ vuln.parameter }}</span>
                         {% endif %}
+                        {% if vuln.cwe %}
+                        <span><strong>CWE:</strong> {{ vuln.cwe }}</span>
+                        {% endif %}
                     </div>
+                    
                     <p><strong>Description:</strong> {{ vuln.description }}</p>
+                    
                     {% if vuln.payload %}
-                    <p><strong>Payload:</strong></p>
+                    <p><strong>Payload Used:</strong></p>
                     <div class="code">{{ vuln.payload }}</div>
                     {% endif %}
+                    
                     <p><strong>Evidence:</strong> {{ vuln.evidence }}</p>
+                    
+                    {% if vuln.remediation_details %}
+                    <div class="remediation-section">
+                        <h4>🛡️ How to Fix This Vulnerability</h4>
+                        
+                        <div>
+                            <span class="priority-badge priority-{{ vuln.remediation_details.priority|lower }}">
+                                Priority: {{ vuln.remediation_details.priority }}
+                            </span>
+                            <span style="margin-left: 10px;">⏱️ Estimated Fix Time: {{ vuln.remediation_details.fix_time }}</span>
+                        </div>
+                        
+                        <div class="remediation-steps">
+                            <p><strong>Remediation Steps:</strong></p>
+                            <ol>
+                            {% for step in vuln.remediation_details.steps %}
+                                <li>{{ step }}</li>
+                            {% endfor %}
+                            </ol>
+                        </div>
+                        
+                        {% if vuln.remediation_details.code_example %}
+                        <div>
+                            <p><strong>Code Example:</strong></p>
+                            <div class="code">{{ vuln.remediation_details.code_example }}</div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if vuln.remediation_details.references %}
+                        <div class="references">
+                            <strong>📚 References & Resources:</strong>
+                            <ul>
+                            {% for ref in vuln.remediation_details.references %}
+                                <li>{{ ref }}</li>
+                            {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% else %}
                     <p><strong>Remediation:</strong> {{ vuln.remediation }}</p>
+                    {% endif %}
                 </div>
                 {% endfor %}
             {% else %}

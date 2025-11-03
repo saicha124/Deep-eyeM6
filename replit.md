@@ -63,8 +63,35 @@ python deep_eye.py --version
 - `data/` - Session and model data (gitignored)
 
 ## Recent Changes
+- **Enhanced Vulnerability Reporting** (Latest)
+  - Added timestamps to all vulnerability records showing when they were discovered
+  - Added detailed remediation guidance with priority levels and fix time estimates
+  - Included step-by-step remediation instructions
+  - Added secure code examples for common vulnerabilities
+  - Included references and resources (OWASP, CWE) for each vulnerability type
+  - Enhanced both HTML and PDF reports with new sections
+  
 - Initial Replit setup completed
 - Python 3.11 environment configured
 - All dependencies installed
 - Required directories created
 - Configuration template copied
+
+## Enhanced Reporting Features
+
+The reports now include comprehensive information for each vulnerability:
+
+1. **Timestamp**: Exact time when the vulnerability was discovered
+2. **Priority Level**: CRITICAL, HIGH, or MEDIUM based on vulnerability type
+3. **Fix Time Estimate**: Estimated time needed to remediate
+4. **Step-by-Step Instructions**: Detailed remediation steps
+5. **Code Examples**: Secure coding patterns to fix the vulnerability
+6. **References**: Links to OWASP guidelines, CWE entries, and best practices
+
+### Report Components
+- **Discovery Time**: Each vulnerability shows when it was found during the scan
+- **Remediation Priority**: Color-coded priority badges (Critical/High/Medium)
+- **Fix Timeline**: Estimated time to implement fixes (e.g., "1-2 days")
+- **Implementation Steps**: Numbered list of actions to take
+- **Secure Code Samples**: Before/after code examples
+- **External Resources**: OWASP cheat sheets, CWE references, documentation links

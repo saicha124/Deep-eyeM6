@@ -102,10 +102,79 @@ All scanning options (depth, threads, scan mode, etc.) are configured in `config
 - **Reports**: `reports/` directory
   - HTML, PDF, or JSON formats
   - Auto-generated with timestamp
+  - **NEW**: Enhanced with detailed remediation guidance
   
 - **Logs**: `logs/deep_eye.log`
   - Detailed execution logs
   - Useful for debugging
+
+## ✨ Enhanced Reporting Features (NEW)
+
+Deep Eye now generates comprehensive reports with:
+
+### 🕐 Vulnerability Timestamps
+- Every vulnerability includes the exact discovery time
+- Helps track when issues were first identified
+- Useful for compliance and audit trails
+
+### 🛡️ Detailed Remediation Guidance
+Each vulnerability includes:
+
+1. **Priority Level** - CRITICAL, HIGH, or MEDIUM
+2. **Fix Time Estimate** - How long it will take to remediate
+3. **Step-by-Step Instructions** - Numbered list of remediation steps
+4. **Secure Code Examples** - Before/after code showing how to fix
+5. **References** - Links to OWASP guidelines, CWE entries, documentation
+
+### 📊 Example Report Sections
+
+When you run a scan, each vulnerability will show:
+
+```
+SQL Injection - CRITICAL
+🕐 Discovered: 2025-11-03 14:23:45
+
+Priority: CRITICAL | ⏱️ Estimated Fix Time: 1-2 days
+
+Steps to Fix:
+1. Use parameterized queries (prepared statements)
+2. Implement input validation and sanitization
+3. Apply principle of least privilege for database accounts
+4. Enable SQL error logging but hide errors from users
+
+Code Example:
+# Bad (Vulnerable):
+query = f"SELECT * FROM users WHERE id = {user_id}"
+
+# Good (Secure):
+cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+
+References:
+- OWASP SQL Injection Prevention Cheat Sheet
+- CWE-89: Improper Neutralization of Special Elements
+- https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html
+```
+
+### 📝 Supported Vulnerability Types
+
+Enhanced remediation guidance is available for:
+- SQL Injection
+- Cross-Site Scripting (XSS)
+- Command Injection
+- CSRF
+- SSRF
+- Path Traversal
+- Authentication Bypass
+- JWT Vulnerabilities
+- Insecure Deserialization
+- And many more...
+
+### 🎨 Report Formats
+
+All report formats (HTML, PDF, JSON) include the enhanced information:
+- **HTML Reports**: Color-coded priority badges, expandable sections
+- **PDF Reports**: Professional formatting with clear sections
+- **JSON Reports**: Complete data for integration with other tools
 
 ## ⚠️ Important Notes
 

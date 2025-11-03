@@ -16,6 +16,7 @@ from rich.console import Console
 from core.vulnerability_scanner import VulnerabilityScanner
 from core.ai_payload_generator import AIPayloadGenerator
 from core.plugin_manager import PluginManager
+from core.vulnerability_helper import add_timestamps_to_vulnerabilities
 from modules.reconnaissance.recon_engine import ReconEngine
 from utils.http_client import HTTPClient
 from utils.parser import URLParser, ResponseParser
@@ -315,6 +316,9 @@ class ScannerEngine:
             self.scan_all_urls({self.target_url}, recon_data)
         else:
             self.scan_all_urls(discovered_urls, recon_data)
+        
+        # Add timestamps to all vulnerabilities
+        self.vulnerabilities = add_timestamps_to_vulnerabilities(self.vulnerabilities)
         
         # Compile results
         results['vulnerabilities'] = self.vulnerabilities
