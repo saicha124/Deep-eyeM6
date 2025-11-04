@@ -39,7 +39,8 @@ BANNER = """
 ║  ⠀⠈⠉⠉⠋⠉⠉⠋⠉⠉⠉⠋⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠋⡟⠉⠉⡿⠋⠋⠋⠉⠉⠁  
 ║                                                                               
 ║                  Advanced AI-Driven Penetration Testing Tool                 
-║                      Version 1.3.0 - Code Name (Hestia)                                  ║
+║                      Version 1.3.0 - Code Name (Hestia)                      
+║                                 Powered by CERIST                             
 ╚══════════════════════════════════════════════════════════════════════════════════════════╝
 """
 
