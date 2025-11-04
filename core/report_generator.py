@@ -143,6 +143,7 @@ class ReportGenerator:
                 'parameter': t.get('parameter'),
                 'description': t.get('description'),
                 'evidence': t.get('evidence'),
+                'cwe': t.get('cwe'),
                 'discovered': t.get('discovered'),
                 'remediation_guidance': t.get('remediation_guidance'),
                 'priority': t.get('priority'),
@@ -153,6 +154,9 @@ class ReportGenerator:
                 'solution': t.get('solution'),
                 'references': t.get('references'),
                 'no_vulnerabilities': t.get('no_vulnerabilities'),
+                'payload_used': t.get('payload_used'),
+                'how_to_fix': t.get('how_to_fix'),
+                'remediation': t.get('remediation'),
             },
             'language': self.translator.language,
         }
@@ -802,48 +806,48 @@ class ReportGenerator:
         {% endif %}
         
         <div class="section">
-            <h2>Executive Summary</h2>
+            <h2>{{ labels.executive_summary }}</h2>
             <p>{{ summary }}</p>
         </div>
         
         <div class="section">
-            <h2>Vulnerabilities</h2>
+            <h2>{{ labels.vulnerabilities }}</h2>
             {% if vulnerabilities %}
                 {% for vuln in vulnerabilities %}
                 <div class="vulnerability {{ vuln.severity }}">
                     <h3>{{ vuln.type }}</h3>
                     {% if vuln.timestamp %}
-                    <p class="timestamp">🕐 Discovered: {{ vuln.timestamp }}</p>
+                    <p class="timestamp">🕐 {{ labels.discovered }}: {{ vuln.timestamp }}</p>
                     {% endif %}
                     <div class="vulnerability-meta">
-                        <span><strong>Severity:</strong> {{ vuln.severity|upper }}</span>
-                        <span><strong>URL:</strong> {{ vuln.url }}</span>
+                        <span><strong>{{ labels.severity }}:</strong> {{ vuln.severity|upper }}</span>
+                        <span><strong>{{ labels.url }}:</strong> {{ vuln.url }}</span>
                         {% if vuln.parameter %}
-                        <span><strong>Parameter:</strong> {{ vuln.parameter }}</span>
+                        <span><strong>{{ labels.parameter }}:</strong> {{ vuln.parameter }}</span>
                         {% endif %}
                         {% if vuln.cwe %}
-                        <span><strong>CWE:</strong> {{ vuln.cwe }}</span>
+                        <span><strong>{{ labels.cwe }}:</strong> {{ vuln.cwe }}</span>
                         {% endif %}
                     </div>
                     
-                    <p><strong>Description:</strong> {{ vuln.description }}</p>
+                    <p><strong>{{ labels.description }}:</strong> {{ vuln.description }}</p>
                     
                     {% if vuln.payload %}
-                    <p><strong>Payload Used:</strong></p>
+                    <p><strong>{{ labels.payload_used }}:</strong></p>
                     <div class="code">{{ vuln.payload }}</div>
                     {% endif %}
                     
-                    <p><strong>Evidence:</strong> {{ vuln.evidence }}</p>
+                    <p><strong>{{ labels.evidence }}:</strong> {{ vuln.evidence }}</p>
                     
                     {% if vuln.remediation_details %}
                     <div class="remediation-section">
-                        <h4>🛡️ How to Fix This Vulnerability</h4>
+                        <h4>🛡️ {{ labels.how_to_fix }}</h4>
                         
                         <div>
                             <span class="priority-badge priority-{{ vuln.remediation_details.priority|lower }}">
-                                Priority: {{ vuln.remediation_details.priority }}
+                                {{ labels.priority }}: {{ vuln.remediation_details.priority }}
                             </span>
-                            <span style="margin-left: 10px;">⏱️ Estimated Fix Time: {{ vuln.remediation_details.fix_time }}</span>
+                            <span style="margin-left: 10px;">⏱️ {{ labels.estimated_fix_time }}: {{ vuln.remediation_details.fix_time }}</span>
                         </div>
                         
                         {% if vuln.remediation_details.exploit_example %}
@@ -888,12 +892,12 @@ class ReportGenerator:
                         {% endif %}
                     </div>
                     {% else %}
-                    <p><strong>Remediation:</strong> {{ vuln.remediation }}</p>
+                    <p><strong>{{ labels.remediation }}:</strong> {{ vuln.remediation }}</p>
                     {% endif %}
                 </div>
                 {% endfor %}
             {% else %}
-                <p>No vulnerabilities detected.</p>
+                <p>{{ labels.no_vulnerabilities }}</p>
             {% endif %}
         </div>
         

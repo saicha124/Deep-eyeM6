@@ -47,6 +47,8 @@ TRANSLATIONS = {
         'risk_distribution': 'Risk Distribution',
         'issues': 'issues',
         'summary_text': 'This security assessment identified {total} potential security issues on the target system.\n\nCritical vulnerabilities require immediate attention as they pose significant risk to the organization.\nHigh and medium severity issues should be addressed in order of priority.',
+        'payload_used': 'Payload Used',
+        'how_to_fix': 'How to Fix This Vulnerability',
     },
     'fr': {
         'report_title': 'Rapport d\'Évaluation de Sécurité Deep Eye',
@@ -91,6 +93,8 @@ TRANSLATIONS = {
         'risk_distribution': 'Distribution des Risques',
         'issues': 'problèmes',
         'summary_text': 'Cette évaluation de sécurité a identifié {total} problèmes de sécurité potentiels sur le système cible.\n\nLes vulnérabilités critiques nécessitent une attention immédiate car elles présentent un risque important pour l\'organisation.\nLes problèmes de gravité élevée et moyenne doivent être traités par ordre de priorité.',
+        'payload_used': 'Charge Utile Utilisée',
+        'how_to_fix': 'Comment Corriger Cette Vulnérabilité',
     },
     'ar': {
         'report_title': 'تقرير تقييم الأمان Deep Eye',
@@ -135,6 +139,8 @@ TRANSLATIONS = {
         'risk_distribution': 'توزيع المخاطر',
         'issues': 'مشاكل',
         'summary_text': 'حدد هذا التقييم الأمني {total} مشكلة أمنية محتملة في النظام المستهدف.\n\nتتطلب الثغرات الحرجة اهتماماً فورياً حيث تشكل خطراً كبيراً على المنظمة.\nيجب معالجة المشاكل ذات الخطورة العالية والمتوسطة حسب الأولوية.',
+        'payload_used': 'الحمولة المستخدمة',
+        'how_to_fix': 'كيفية إصلاح هذه الثغرة',
     }
 }
 
