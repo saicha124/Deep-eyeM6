@@ -22,9 +22,9 @@ args = "Deep Eye Scanner"
 name = "Deep Eye Scanner"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "console"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python deep_eye.py --help"
-
-[workflows.workflow.metadata]
-outputType = "console"
