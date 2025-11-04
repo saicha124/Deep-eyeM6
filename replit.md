@@ -79,8 +79,17 @@ python deep_eye.py --version
 
 ## Recent Changes
 
+- **Information Disclosure Reporting Enhanced - November 4, 2025**
+  - Added comprehensive remediation guide for Information Disclosure vulnerabilities
+  - Now includes common error codes and attack scenarios
+  - Added detailed solutions for disabling debug mode and error messages
+  - Includes code examples for Python/Flask, Django, Node.js, Apache, and Nginx
+  - Added CWE references: CWE-209, CWE-200, CWE-497
+  - Shows specific error patterns: stack traces, database errors, version exposure
+  - Provides step-by-step fix instructions with configuration examples
+
 - **Import Completed - November 4, 2025**
-  - Python 3.11 environment configured
+  - Python 3.12 environment configured
   - All 60+ dependencies installed successfully
   - Configuration setup with AI disabled for default payload scanning
   - Fixed issue: Scanner was failing due to invalid AI API keys

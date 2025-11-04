@@ -415,6 +415,148 @@ SOLUTION:
                 'CWE-611: Improper Restriction of XML External Entity Reference',
                 'https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html'
             ]
+        },
+        
+        'Information Disclosure': {
+            'priority': 'HIGH',
+            'fix_time': '1-2 days',
+            'steps': [
+                'Configure custom error pages for production environments',
+                'Disable debug mode and verbose error messages in production',
+                'Implement centralized error logging (server-side only)',
+                'Remove sensitive data from error responses and stack traces',
+                'Configure web server to hide version information',
+                'Review source code comments for sensitive information',
+                'Implement proper exception handling in all code paths'
+            ],
+            'exploit_example': '''
+ATTACK SCENARIO - Information Disclosure:
+1. Navigate to a product page with an invalid productId parameter
+2. Example: /product?productId=invalid
+3. Observe the error response contains:
+   - Stack traces revealing internal file paths
+   - Database error messages exposing schema information
+   - Framework version numbers (e.g., Django 3.2.5, Apache 2.4.48)
+   - Internal IP addresses or server hostnames
+   - Sensitive configuration details
+
+COMMON ERROR CODES EXPOSED:
+- HTTP 500 Internal Server Error with full stack trace
+- Database errors: "MySQL Error 1054: Unknown column 'password' in users table"
+- Framework errors: "Traceback (most recent call last): File '/app/views/product.py', line 45..."
+- PHP errors: "Fatal error in /var/www/html/config.php on line 127"
+- ASP.NET errors: "Server Error in '/' Application. Object reference not set..."
+
+ATTACK PAYLOAD:
+# Trigger errors with invalid input:
+?productId=999999999
+?productId=-1
+?productId=<script>alert(1)</script>
+?productId=../../etc/passwd
+?productId='OR'1'='1
+''',
+            'code_example': '''
+# Bad (Vulnerable - Exposes stack traces):
+try:
+    product = get_product(product_id)
+except Exception as e:
+    return f"Error: {str(e)}\n{traceback.format_exc()}", 500
+
+# Bad (Shows database errors):
+app.config['DEBUG'] = True  # In production!
+app.config['PROPAGATE_EXCEPTIONS'] = True
+
+# Good (Secure - Python/Flask):
+import logging
+
+# Configure logging
+logging.basicConfig(filename='app.log', level=logging.ERROR)
+
+@app.errorhandler(Exception)
+def handle_error(error):
+    # Log detailed error server-side
+    logging.error(f"Error occurred: {error}", exc_info=True)
+    
+    # Show generic message to user
+    return {"error": "An error occurred processing your request"}, 500
+
+# Good (Production settings):
+app.config['DEBUG'] = False
+app.config['TESTING'] = False
+app.config['PROPAGATE_EXCEPTIONS'] = False
+
+# Good (Custom error pages - Django):
+# settings.py
+DEBUG = False
+ALLOWED_HOSTS = ['yourdomain.com']
+
+# Good (Hide server version - Apache):
+# httpd.conf
+ServerTokens Prod
+ServerSignature Off
+
+# Good (Hide server version - Nginx):
+# nginx.conf
+server_tokens off;
+
+# Good (Node.js/Express):
+app.use((err, req, res, next) => {
+    // Log error details
+    console.error(err.stack);
+    
+    // Send generic response
+    res.status(500).json({
+        error: 'Internal server error'
+    });
+});
+''',
+            'solution': '''
+SOLUTION - Disable Information Disclosure:
+
+1. DISABLE DEBUG MODE IN PRODUCTION:
+   - Python/Flask: app.config['DEBUG'] = False
+   - Django: DEBUG = False in settings.py
+   - Node.js: NODE_ENV=production
+   - PHP: display_errors = Off in php.ini
+
+2. IMPLEMENT CUSTOM ERROR HANDLERS:
+   - Catch all exceptions and return generic error messages
+   - Log detailed errors server-side only
+   - Never expose stack traces, file paths, or internal details to users
+
+3. CONFIGURE WEB SERVER SECURITY:
+   - Apache: ServerTokens Prod, ServerSignature Off
+   - Nginx: server_tokens off;
+   - Hide version information in HTTP headers
+
+4. SECURE ERROR PAGES:
+   - Create custom 404, 500 error pages without technical details
+   - Use generic messages: "An error occurred" instead of specific errors
+   - Never display database errors to end users
+
+5. REVIEW AND REMOVE SENSITIVE DATA:
+   - Remove API keys, passwords, tokens from source code
+   - Clean up comments containing sensitive information
+   - Don't include database schema details in error messages
+
+6. IMPLEMENT PROPER LOGGING:
+   - Log all errors server-side with full details
+   - Use logging frameworks (Python logging, Winston, Log4j)
+   - Store logs securely with restricted access
+   - Never log sensitive data (passwords, tokens, PII)
+
+ERROR CODE REFERENCE:
+- CWE-209: Generation of Error Message Containing Sensitive Information
+- CWE-200: Exposure of Sensitive Information to an Unauthorized Actor
+- CWE-497: Exposure of Sensitive System Information
+''',
+            'references': [
+                'OWASP Error Handling Cheat Sheet',
+                'CWE-209: Information Exposure Through an Error Message',
+                'CWE-200: Exposure of Sensitive Information',
+                'https://cheatsheetseries.owasp.org/cheatsheets/Error_Handling_Cheat_Sheet.html',
+                'https://cwe.mitre.org/data/definitions/209.html'
+            ]
         }
     }
     
