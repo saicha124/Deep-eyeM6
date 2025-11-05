@@ -1,0 +1,59 @@
+13
+High
+88
+Medium
+29
+Low
+Business Logic - Negative Quantity
+high ▼
+URL: https://0ab60056047ea14e81cd6bdb00d600b5.web-security-academy.net/my-account | Parameter: quantity | Discovered: 2025-11-05 09:10:44
+📋 Description
+Application accepts negative quantity values
+
+🔍 Evidence
+Negative quantity accepted: -1
+
+🔧 Remediation
+Implement positive integer validation for quantities
+
+Business Logic - Negative Quantity
+high ▼
+URL: https://0ab60056047ea14e81cd6bdb00d600b5.web-security-academy.net/my-account | Parameter: qty | Discovered: 2025-11-05 09:10:44
+📋 Description
+Application accepts negative quantity values
+
+🔍 Evidence
+Negative quantity accepted: -1
+
+🔧 Remediation
+Implement positive integer validation for quantities
+
+Business Logic - Negative Quantity
+high ▼
+URL: https://0ab60056047ea14e81cd6bdb00d600b5.web-security-academy.net/my-account | Parameter: amount | Discovered: 2025-11-05 09:10:44
+📋 Description
+Application accepts negative quantity values
+
+🔍 Evidence
+Negative quantity accepted: -1
+
+🔧 Remediation
+Implement positive integer validation for quantities
+
+Business Logic - Negative Quantity
+high ▼
+URL: https://0ab60056047ea14e81cd6bdb00d600b5.web-security-academy.net/my-account | Parameter: count | Discovered: 2025-11-05 09:10:44
+Business Logic - Negative Quantity
+high ▼
+URL: https://0ab60056047ea14e81cd6bdb00d600b5.web-security-academy.net/resources/labheader/js/labHeader.js | Parameter: quantity | Discovered: 2025-11-05 09:10:44
+Business Logic - Negative Quantity
+high ▼
+URL: https://0ab60056047ea14e81cd6bdb00d600b5.web-security-academy.net/resources/labheader/js/labHeader.js | Parameter: qty | Discovered: 2025-11-05 09:10:44
+Business Logic - Negative Quantity
+high ▼
+URL: https://0ab60056047ea14e81cd6bdb00d600b5.web-security-academy.net/resources/labheader/js/labHeader.js | Parameter: amount | Discovered: 2025-11-05 09:10:44
+Business Logic - Negative Quantity
+high ▼
+URL: https://0ab60056047ea14e81cd6bdb00d600b5.web-security-academy.net/resources/labheader/js/labHeader.js | Parameter: count | Discovered: 2025-11-05 09:10:44
+
+
