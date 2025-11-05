@@ -1696,6 +1696,18 @@ ERROR CODE REFERENCE:
         
         vulnerability['remediation_details'] = remediation_details
         
+        # Copy important fields directly to vulnerability for easy template access
+        if 'code_example' in remediation_details:
+            vulnerability['code_example'] = remediation_details['code_example']
+        if 'solution' in remediation_details:
+            vulnerability['solution'] = remediation_details['solution']
+        if 'steps' in remediation_details and 'steps_to_fix' not in vulnerability:
+            vulnerability['steps_to_fix'] = remediation_details['steps']
+        if 'exploit_example' in remediation_details:
+            vulnerability['exploit_example'] = remediation_details['exploit_example']
+        if 'references' in remediation_details:
+            vulnerability['references'] = remediation_details['references']
+        
         # Keep original remediation as summary
         if 'remediation' not in vulnerability or not vulnerability['remediation']:
             vulnerability['remediation'] = remediation_details['steps'][0]
