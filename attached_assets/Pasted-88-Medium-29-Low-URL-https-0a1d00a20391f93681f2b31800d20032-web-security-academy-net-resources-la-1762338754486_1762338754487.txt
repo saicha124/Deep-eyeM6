@@ -1,0 +1,67 @@
+88
+Medium
+29
+Low
+URL: https://0a1d00a20391f93681f2b31800d20032.web-security-academy.net/resources/labheader/js/labHeader.js | Discovered: 2025-11-05 10:30:31
+📋 Description
+MIME sniffing protection missing
+🔍 Evidence
+Missing header: X-Content-Type-Options
+⚡ Payload Used (Line 814)
+Copy
+Header check: X-Content-Type-Options
+🔧 Remediation
+Add X-Content-Type-Options header to all responses
+📍 Payload Source
+📄 core/vulnerability_scanner.py (Line 814) 🎯 Parameter: X-Content-Type-Options
+Security header presence validation
+🔎 Detection Source
+📦 Module: core.vulnerability_scanner ⚙️ Function: _check_security_headers 📏 Lines: 803-856
+URL: https://0a1d00a20391f93681f2b31800d20032.web-security-academy.net/resources/labheader/js/labHeader.js | Discovered: 2025-11-05 10:30:31
+URL: https://0a1d00a20391f93681f2b31800d20032.web-security-academy.net/resources/labheader/js/labHeader.js | Discovered: 2025-11-05 10:30:31
+📋 Description
+CSP not implemented
+🔍 Evidence
+Missing header: Content-Security-Policy
+⚡ Payload Used (Line 814)
+Copy
+Header check: Content-Security-Policy
+🔧 Remediation
+Add Content-Security-Policy header to all responses
+📍 Payload Source
+📄 core/vulnerability_scanner.py (Line 814) 🎯 Parameter: Content-Security-Policy
+Security header presence validation
+🔎 Detection Source
+📦 Module: core.vulnerability_scanner ⚙️ Function: _check_security_headers 📏 Lines: 803-856
+URL: https://0a1d00a20391f93681f2b31800d20032.web-security-academy.net/openai/logs | Discovered: 2025-11-05 10:30:31
+📋 Description
+MIME sniffing protection missing
+🔍 Evidence
+Missing header: X-Content-Type-Options
+⚡ Payload Used (Line 814)
+Copy
+Header check: X-Content-Type-Options
+🔧 Remediation
+Add X-Content-Type-Options header to all responses
+📍 Payload Source
+📄 core/vulnerability_scanner.py (Line 814) 🎯 Parameter: X-Content-Type-Options
+Security header presence validation
+🔎 Detection Source
+📦 Module: core.vulnerability_scanner ⚙️ Function: _check_security_headers 📏 Lines: 803-856
+URL: https://0a1d00a20391f93681f2b31800d20032.web-security-academy.net/openai/logs | Discovered: 2025-11-05 10:30:31
+URL: https://0a1d00a20391f93681f2b31800d20032.web-security-academy.net/openai/logs | Discovered: 2025-11-05 10:30:31
+URL: https://0a1d00a20391f93681f2b31800d20032.web-security-academy.net | Discovered: 2025-11-05 10:30:37
+📋 Description
+MIME sniffing protection missing
+🔍 Evidence
+Missing header: X-Content-Type-Options
+⚡ Payload Used (Line 814)
+Copy
+Header check: X-Content-Type-Options
+🔧 Remediation
+Add X-Content-Type-Options header to all responses
+📍 Payload Source
+📄 core/vulnerability_scanner.py (Line 814) 🎯 Parameter: X-Content-Type-Options
+Security header presence validation
+🔎 Detection Source
+📦 Module: core.vulnerability_scanner ⚙️ Function: _check_security_headers 📏 Lines: 803-856
