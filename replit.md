@@ -97,6 +97,33 @@ python deep_eye.py --version
 
 ## Recent Changes
 
+- **Enhanced Detailed Vulnerability Reports - November 5, 2025**
+  - **Complete HTTP Request/Response Capture**: Every vulnerability now includes full HTTP interaction details
+    - Request method, URL, headers (sensitive data redacted)
+    - Complete request body showing exact attack payloads sent
+    - Response status code, latency, and full response body (truncated to 5KB for safety)
+  - **Attack Payload Source Tracking**: Shows exactly where payloads originate
+    - Source file and line number (e.g., `core/ai_payload_generator.py` Line 175)
+    - Parameter context (which parameter was attacked)
+    - Attack context description
+  - **Detection Source Information**: Tracks where vulnerabilities were detected in code
+    - Module name (e.g., `core.vulnerability_scanner`)
+    - Function name (e.g., `_check_xxe`)
+    - Source code line range (e.g., Lines 407-524)
+  - **Interactive HTML Vulnerability Digest**: 
+    - Expandable/collapsible vulnerability cards with click-to-expand details
+    - Copy-to-clipboard buttons for all code blocks
+    - Beautifully formatted HTTP request/response sections
+    - Color-coded by severity (Critical, High, Medium, Low)
+    - Shows complete attack chain: Payload → Request → Response → Detection
+  - **Security Hardening**:
+    - All templates use Jinja2 autoescaping to prevent XSS attacks
+    - Sensitive headers (Authorization, API keys, Cookies) automatically redacted
+    - Large request/response bodies truncated to prevent memory issues
+  - **XXE Scanner Enhanced**: First scanner upgraded with detailed reporting (example for all others)
+  - Perfect for security audits, compliance reports, and developer training
+  - Location: `reports/vulnerability_digest_*.html` (auto-generated with each scan)
+
 - **SVG CERIST Logo & Vulnerability Digest - November 4, 2025**
   - Created professional SVG vector logo for CERIST (scalable, high-quality)
   - Logo features shield icon, gradient design, and full organization name
