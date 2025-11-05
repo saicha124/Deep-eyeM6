@@ -97,6 +97,27 @@ python deep_eye.py --version
 
 ## Recent Changes
 
+- **Scanner Updates & Comprehensive Testing - November 5, 2025**
+  - **Enhanced Scanner Propagation**: Updated SQL Injection, XSS, and Command Injection scanners with complete enhanced capture
+    - All three scanners now use create_vulnerability() with payload_info, interaction, and detector metadata
+    - Consistent implementation pattern established for future scanner updates
+    - SSRF and Path Traversal scheduled for future enhancement (pattern well-documented)
+  - **Comprehensive Regression Test Suite**: Created 9 automated tests verifying security features
+    - ✅ Sensitive header redaction (Authorization, Cookie, API keys automatically redacted)
+    - ✅ Request/response body truncation at 5KB to prevent memory issues
+    - ✅ Latency calculation and timing accuracy
+    - ✅ Binary data handling and encoding
+    - ✅ All required interaction fields validation
+    - ✅ Vulnerability helper integration and timestamp generation
+    - All tests passing (9/9) - can be run with `python tests/test_security_features.py`
+  - **Complete Schema Documentation**: Created docs/VULNERABILITY_SCHEMA.md
+    - Detailed field descriptions for all vulnerability attributes
+    - Security considerations (redaction, truncation, XSS prevention)
+    - Implementation patterns for scanner developers
+    - Integration examples for custom plugins and external tools
+    - Backwards compatibility notes
+  - **Architect-Reviewed**: All changes reviewed and approved for production
+
 - **Enhanced Detailed Vulnerability Reports - November 5, 2025**
   - **Complete HTTP Request/Response Capture**: Every vulnerability now includes full HTTP interaction details
     - Request method, URL, headers (sensitive data redacted)
