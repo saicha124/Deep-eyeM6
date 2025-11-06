@@ -574,7 +574,7 @@ class ReportGenerator:
         )
     
     def _get_html_template(self) -> str:
-        """Get HTML report template."""
+        """Get enhanced HTML report template with dark mode and modern UI."""
         return '''
 <!DOCTYPE html>
 <html lang="{{ language }}" dir="{% if language == 'ar' %}rtl{% else %}ltr{% endif %}">
@@ -582,6 +582,7 @@ class ReportGenerator:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -589,34 +590,152 @@ class ReportGenerator:
             box-sizing: border-box;
         }
         
+        :root {
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-hover: 0 8px 16px rgba(0,0,0,0.15);
+            --accent-primary: #667eea;
+            --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --code-bg: #2d2d2d;
+            --code-text: #f8f8f2;
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-card: #2d2d2d;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --border-color: #404040;
+            --shadow: 0 4px 6px rgba(0,0,0,0.3);
+            --shadow-hover: 0 8px 16px rgba(0,0,0,0.4);
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+        }
+        
         body {
             font-family: {% if language == 'ar' %}'Arial', 'Tahoma', sans-serif{% else %}'Segoe UI', Tahoma, Geneva, Verdana, sans-serif{% endif %};
             line-height: 1.6;
-            color: #333;
-            background-color: #f5f5f5;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
             direction: {% if language == 'ar' %}rtl{% else %}ltr{% endif %};
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+        
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .export-btn {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            z-index: 1000;
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+        
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
         }
         
         .header {
-            background: white;
-            color: #333;
+            background: var(--bg-card);
+            color: var(--text-primary);
             padding: 40px;
-            border-radius: 10px;
+            border-radius: 15px;
             margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border: 2px solid #e0e0e0;
+            box-shadow: var(--shadow);
+            border: 2px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--accent-gradient);
         }
         
         .header h1 {
             font-size: 2.5em;
             margin-bottom: 10px;
-            color: #2c3e50;
+            color: var(--text-primary);
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .risk-dashboard {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            border: 2px solid var(--border-color);
+        }
+        
+        .risk-dashboard h2 {
+            color: var(--accent-primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .risk-score {
+            display: inline-block;
+            font-size: 3em;
+            font-weight: bold;
+            padding: 20px 40px;
+            border-radius: 15px;
+            margin: 20px 0;
+            background: var(--accent-gradient);
+            color: white;
+            box-shadow: var(--shadow);
         }
         
         .metadata {
@@ -627,64 +746,153 @@ class ReportGenerator:
         }
         
         .metadata-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: var(--bg-card);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .metadata-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
         }
         
         .metadata-card h3 {
-            color: #667eea;
+            color: var(--accent-primary);
             margin-bottom: 10px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .metadata-card p {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: var(--text-primary);
         }
         
         .severity-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
             margin-bottom: 30px;
         }
         
         .severity-card {
-            padding: 20px;
-            border-radius: 8px;
+            padding: 25px;
+            border-radius: 15px;
             color: white;
             text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
         
-        .severity-critical { background-color: #8B0000; }
-        .severity-high { background-color: #FF4500; }
-        .severity-medium { background-color: #FFA500; }
+        .severity-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255,255,255,0.1);
+            transform: rotate(45deg);
+            transition: all 0.5s ease;
+        }
+        
+        .severity-card:hover::before {
+            left: 100%;
+        }
+        
+        .severity-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .severity-critical { background: linear-gradient(135deg, #8B0000 0%, #a30000 100%); }
+        .severity-high { background: linear-gradient(135deg, #FF4500 0%, #ff5722 100%); }
+        .severity-medium { background: linear-gradient(135deg, #FFA500 0%, #ffb733 100%); }
         .severity-low { background-color: #FFD700; color: #333; }
         .severity-info { background-color: #87CEEB; color: #333; }
         
         .severity-card h3 {
-            font-size: 2em;
+            font-size: 2.5em;
             margin-bottom: 5px;
+            font-weight: bold;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .severity-card p {
+            font-size: 1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .charts-section {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .chart-container {
+            background: var(--bg-primary);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+        
+        .chart-container h3 {
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            text-align: center;
         }
         
         .section {
-            background: white;
+            background: var(--bg-card);
             padding: 30px;
-            border-radius: 8px;
+            border-radius: 15px;
             margin-bottom: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
         }
         
         .section h2 {
-            color: #667eea;
+            color: var(--accent-primary);
             margin-bottom: 20px;
-            border-bottom: 2px solid #667eea;
+            border-bottom: 2px solid var(--accent-primary);
             padding-bottom: 10px;
+            font-size: 1.8em;
         }
         
         .vulnerability {
-            border-left: 4px solid #ddd;
-            padding: 20px;
-            margin-bottom: 20px;
-            background: #f9f9f9;
-            border-radius: 4px;
+            border-left: 5px solid var(--border-color);
+            padding: 25px;
+            margin-bottom: 25px;
+            background: var(--bg-primary);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+        
+        .vulnerability:hover {
+            transform: translateX(5px);
+            box-shadow: var(--shadow-hover);
         }
         
         .vulnerability.critical { border-left-color: #8B0000; }
@@ -693,68 +901,72 @@ class ReportGenerator:
         .vulnerability.low { border-left-color: #FFD700; }
         
         .vulnerability h3 {
-            color: #333;
-            margin-bottom: 10px;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            font-size: 1.5em;
         }
         
         .vulnerability-meta {
             display: flex;
-            gap: 20px;
-            margin: 10px 0;
+            gap: 15px;
+            margin: 15px 0;
             flex-wrap: wrap;
         }
         
         .vulnerability-meta span {
-            background: white;
-            padding: 5px 10px;
-            border-radius: 4px;
+            background: var(--bg-card);
+            padding: 8px 15px;
+            border-radius: 20px;
             font-size: 0.9em;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
         }
         
         .code {
-            background: #2d2d2d;
-            color: #f8f8f2;
-            padding: 15px;
-            border-radius: 4px;
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 20px;
+            border-radius: 8px;
             overflow-x: auto;
-            font-family: 'Courier New', monospace;
+            font-family: 'Courier New', 'Monaco', monospace;
             margin: 10px 0;
             white-space: pre-wrap;
         }
         
         .remediation-section {
-            background: #f0f8ff;
-            border: 1px solid #4a90e2;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 15px 0;
+            background: var(--bg-primary);
+            border: 2px solid var(--accent-primary);
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
         }
         
         .remediation-section h4 {
-            color: #4a90e2;
+            color: var(--accent-primary);
             margin-bottom: 15px;
-            font-size: 1.1em;
+            font-size: 1.2em;
         }
         
         .remediation-steps {
-            margin: 15px 0;
+            margin: 20px 0;
         }
         
         .remediation-steps ol {
-            margin-left: 20px;
-            line-height: 1.8;
+            margin-left: 25px;
+            line-height: 2;
         }
         
         .remediation-steps li {
-            margin: 8px 0;
+            margin: 12px 0;
+            color: var(--text-primary);
         }
         
         .priority-badge {
             display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
+            padding: 8px 16px;
+            border-radius: 25px;
             font-weight: bold;
-            font-size: 0.85em;
+            font-size: 0.9em;
             margin: 5px 0;
         }
         
@@ -774,33 +986,38 @@ class ReportGenerator:
         }
         
         .references {
-            margin-top: 15px;
-            padding: 10px;
-            background: #f9f9f9;
-            border-left: 3px solid #4a90e2;
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--bg-primary);
+            border-left: 4px solid var(--accent-primary);
+            border-radius: 5px;
         }
         
         .references ul {
-            margin-left: 20px;
-            margin-top: 5px;
+            margin-left: 25px;
+            margin-top: 10px;
+        }
+        
+        .references li {
+            color: var(--text-primary);
         }
         
         .timestamp {
-            color: #666;
-            font-size: 0.85em;
+            color: var(--text-secondary);
+            font-size: 0.9em;
             font-style: italic;
         }
         
         .recon-subsection {
             margin: 20px 0;
-            padding: 20px;
-            background: #f9f9f9;
-            border-left: 4px solid #667eea;
-            border-radius: 5px;
+            padding: 25px;
+            background: var(--bg-primary);
+            border-left: 5px solid var(--accent-primary);
+            border-radius: 10px;
         }
         
         .recon-subsection h3 {
-            color: #667eea;
+            color: var(--accent-primary);
             margin-bottom: 15px;
         }
         
@@ -809,18 +1026,22 @@ class ReportGenerator:
         }
         
         .recon-data p {
-            margin: 8px 0;
+            margin: 10px 0;
+            color: var(--text-primary);
         }
         
         .footer {
             text-align: center;
-            padding: 20px;
-            color: #666;
-            margin-top: 30px;
+            padding: 30px;
+            color: var(--text-secondary);
+            margin-top: 40px;
+            background: var(--bg-card);
+            border-radius: 15px;
+            box-shadow: var(--shadow);
         }
         
         .logo {
-            max-width: 150px;
+            max-width: 180px;
             height: auto;
             margin: 10px 0;
         }
@@ -830,19 +1051,68 @@ class ReportGenerator:
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
+            gap: 20px;
         }
         
         .header-text {
             flex: 1;
+            min-width: 300px;
         }
         
         .header-logo {
             padding: 10px;
             background: transparent;
         }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .theme-toggle, .export-btn {
+                position: static;
+                margin: 10px auto;
+                display: block;
+                width: 200px;
+            }
+            
+            .severity-grid,  .metadata, .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                min-height: 250px;
+            }
+        }
+        
+        @media print {
+            .theme-toggle, .export-btn {
+                display: none !important;
+            }
+            
+            body {
+                background: white;
+                color: black;
+            }
+            
+            .vulnerability {
+                page-break-inside: avoid;
+            }
+            
+            .section {
+                page-break-inside: avoid;
+            }
+        }
     </style>
 </head>
 <body>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙 Toggle Dark Mode</button>
+    <button class="export-btn" onclick="window.print()">📄 Print / Export PDF</button>
+    
     <div class="container">
         <div class="header">
             <div class="header-content">
@@ -855,6 +1125,18 @@ class ReportGenerator:
                 </div>
             </div>
         </div>
+        
+        {% if severity_counts %}
+        <div class="risk-dashboard">
+            <h2>📊 Risk Assessment Dashboard</h2>
+            <div>
+                <span class="risk-score" id="riskScore">Loading...</span>
+                <p style="color: var(--text-secondary); margin-top: 10px;">
+                    Overall Security Risk Score (0-100)
+                </p>
+            </div>
+        </div>
+        {% endif %}
         
         <div class="metadata">
             <div class="metadata-card">
@@ -889,6 +1171,22 @@ class ReportGenerator:
                 <p>Low</p>
             </div>
         </div>
+        
+        {% if severity_counts %}
+        <div class="charts-section">
+            <h2 style="color: var(--accent-primary); margin-bottom: 20px;">📈 Vulnerability Analytics</h2>
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Severity Distribution</h3>
+                    <canvas id="severityChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Risk Breakdown</h3>
+                    <canvas id="riskChart"></canvas>
+                </div>
+            </div>
+        </div>
+        {% endif %}
         
         {% if reconnaissance %}
         <div class="section">
@@ -1046,6 +1344,172 @@ class ReportGenerator:
             <p>⚠️ This report contains sensitive security information. Handle with care.</p>
         </div>
     </div>
+    
+    <script>
+        // Dark Mode Toggle with Local Storage
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? '' : 'dark';
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Update button text
+            const btn = document.querySelector('.theme-toggle');
+            btn.textContent = newTheme === 'dark' ? '☀️ Toggle Light Mode' : '🌙 Toggle Dark Mode';
+        }
+        
+        // Load saved theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.querySelector('.theme-toggle').textContent = '☀️ Toggle Light Mode';
+            }
+            
+            // Calculate Risk Score
+            const critical = {{ severity_counts.critical|default(0) }};
+            const high = {{ severity_counts.high|default(0) }};
+            const medium = {{ severity_counts.medium|default(0) }};
+            const low = {{ severity_counts.low|default(0) }};
+            
+            // Risk score formula: weighted sum normalized to 0-100
+            const riskScore = Math.min(100, Math.round(
+                (critical * 10) + (high * 6) + (medium * 3) + (low * 1)
+            ));
+            
+            const riskElement = document.getElementById('riskScore');
+            if (riskElement) {
+                riskElement.textContent = riskScore;
+                
+                // Color code the risk score
+                if (riskScore >= 70) {
+                    riskElement.style.background = 'linear-gradient(135deg, #8B0000 0%, #a30000 100%)';
+                } else if (riskScore >= 40) {
+                    riskElement.style.background = 'linear-gradient(135deg, #FF4500 0%, #ff5722 100%)';
+                } else if (riskScore >= 20) {
+                    riskElement.style.background = 'linear-gradient(135deg, #FFA500 0%, #ffb733 100%)';
+                } else {
+                    riskElement.style.background = 'linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)';
+                }
+            }
+            
+            // Render Charts if Chart.js is available
+            if (typeof Chart !== 'undefined') {
+                // Severity Distribution Doughnut Chart
+                const severityCtx = document.getElementById('severityChart');
+                if (severityCtx) {
+                    new Chart(severityCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Critical', 'High', 'Medium', 'Low'],
+                            datasets: [{
+                                data: [critical, high, medium, low],
+                                backgroundColor: [
+                                    '#8B0000',
+                                    '#FF4500',
+                                    '#FFA500',
+                                    '#FFD700'
+                                ],
+                                borderWidth: 2,
+                                borderColor: '#ffffff'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        color: getComputedStyle(document.documentElement)
+                                            .getPropertyValue('--text-primary'),
+                                        padding: 15,
+                                        font: {
+                                            size: 12
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.label || '';
+                                            const value = context.parsed || 0;
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                            return label + ': ' + value + ' (' + percentage + '%)';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // Risk Breakdown Bar Chart
+                const riskCtx = document.getElementById('riskChart');
+                if (riskCtx) {
+                    new Chart(riskCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Critical', 'High', 'Medium', 'Low'],
+                            datasets: [{
+                                label: 'Vulnerabilities Count',
+                                data: [critical, high, medium, low],
+                                backgroundColor: [
+                                    '#8B0000',
+                                    '#FF4500',
+                                    '#FFA500',
+                                    '#FFD700'
+                                ],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1,
+                                        color: getComputedStyle(document.documentElement)
+                                            .getPropertyValue('--text-primary')
+                                    },
+                                    grid: {
+                                        color: getComputedStyle(document.documentElement)
+                                            .getPropertyValue('--border-color')
+                                    }
+                                },
+                                x: {
+                                    ticks: {
+                                        color: getComputedStyle(document.documentElement)
+                                            .getPropertyValue('--text-primary')
+                                    },
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return 'Count: ' + context.parsed.y;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    </script>
 </body>
 </html>
 '''
