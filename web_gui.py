@@ -262,13 +262,25 @@ def run_scan_background(scan_id, target_url):
         vulnerabilities = []
         for vuln in results.get('vulnerabilities', []):
             vulnerabilities.append({
-                'name': vuln.get('name', 'Unknown Vulnerability'),
+                'name': vuln.get('type', vuln.get('name', 'Unknown Vulnerability')),
                 'severity': vuln.get('severity', 'info').lower(),
                 'description': vuln.get('description', ''),
                 'url': vuln.get('url', target_url),
                 'parameter': vuln.get('parameter', ''),
                 'payload': vuln.get('payload', ''),
-                'remediation': vuln.get('remediation', '')
+                'evidence': vuln.get('evidence', ''),
+                'remediation': vuln.get('remediation', ''),
+                'remediation_steps': vuln.get('remediation_steps', []),
+                'vulnerable_code': vuln.get('vulnerable_code', ''),
+                'solution_code': vuln.get('solution_code', ''),
+                'references': vuln.get('references', []),
+                'cwe': vuln.get('cwe', ''),
+                'priority': vuln.get('priority', vuln.get('severity', 'info').upper()),
+                'fix_time': vuln.get('fix_time', ''),
+                'timestamp': vuln.get('timestamp', datetime.now().isoformat()),
+                'payload_info': vuln.get('payload_info', {}),
+                'interaction': vuln.get('interaction', {}),
+                'detector': vuln.get('detector', {})
             })
         
         scan_data = {
