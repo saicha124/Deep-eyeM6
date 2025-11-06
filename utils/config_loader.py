@@ -9,6 +9,12 @@ from pathlib import Path
 from typing import Dict, Any
 from utils.logger import get_logger
 
+try:
+    from utils.secret_manager import get_decrypted_env
+except ImportError:
+    def get_decrypted_env(key, default=""):
+        return os.getenv(key, default)
+
 logger = get_logger(__name__)
 
 
@@ -57,11 +63,11 @@ class ConfigLoader:
         elif isinstance(config, list):
             return [ConfigLoader._expand_env_vars(item) for item in config]
         elif isinstance(config, str):
-            # Replace ${VAR_NAME} with environment variable value
+            # Replace ${VAR_NAME} with environment variable value (decrypted if needed)
             pattern = r'\$\{([^}]+)\}'
             matches = re.findall(pattern, config)
             for var_name in matches:
-                env_value = os.environ.get(var_name, '')
+                env_value = get_decrypted_env(var_name, '')
                 if env_value:
                     config = config.replace(f'${{{var_name}}}', env_value)
                 else:
