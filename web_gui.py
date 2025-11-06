@@ -237,6 +237,7 @@ def run_scan_background(scan_id, target_url):
     try:
         scan_status[scan_id]['status'] = 'running'
         scan_status[scan_id]['message'] = 'Initializing scanner...'
+        scan_status[scan_id]['progress'] = 10
         
         config = ConfigLoader.load('config/config.yaml')
         scanner_config = config.get('scanner', {})
@@ -247,7 +248,8 @@ def run_scan_background(scan_id, target_url):
         ai_manager = AIProviderManager(config)
         ai_manager.set_provider(ai_provider)
         
-        scan_status[scan_id]['message'] = 'Starting scan...'
+        scan_status[scan_id]['message'] = 'Starting vulnerability scan...'
+        scan_status[scan_id]['progress'] = 30
         
         scanner = ScannerEngine(
             target_url=target_url,
@@ -257,7 +259,13 @@ def run_scan_background(scan_id, target_url):
             threads=threads
         )
         
+        scan_status[scan_id]['message'] = 'Scanning for vulnerabilities...'
+        scan_status[scan_id]['progress'] = 50
+        
         results = scanner.scan()
+        
+        scan_status[scan_id]['message'] = 'Processing results...'
+        scan_status[scan_id]['progress'] = 80
         
         vulnerabilities = []
         for vuln in results.get('vulnerabilities', []):
@@ -300,6 +308,7 @@ def run_scan_background(scan_id, target_url):
         
         scan_status[scan_id]['status'] = 'completed'
         scan_status[scan_id]['message'] = f'Scan completed! Found {len(vulnerabilities)} vulnerabilities'
+        scan_status[scan_id]['progress'] = 100
         scan_status[scan_id]['results'] = {
             'target_url': target_url,
             'vulnerabilities': vulnerabilities,
@@ -333,6 +342,7 @@ def start_scan():
     scan_status[scan_id] = {
         'status': 'starting',
         'message': 'Scan queued...',
+        'progress': 0,
         'results': None
     }
     
