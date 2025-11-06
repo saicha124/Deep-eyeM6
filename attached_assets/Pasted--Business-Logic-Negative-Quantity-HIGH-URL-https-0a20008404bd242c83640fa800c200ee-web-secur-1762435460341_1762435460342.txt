@@ -1,0 +1,84 @@
+📌 Business Logic - Negative Quantity
+HIGH
+🌐 URL
+https://0a20008404bd242c83640fa800c200ee.web-security-academy.net/resources/labheader/js/labHeader.js
+📍 Parameter
+quantity
+🕐 Discovered
+2025-11-06 09:56:28
+📋 Description
+Application accepts negative quantity values
+
+🔍 Evidence
+Negative quantity accepted: -1
+
+🔧 Remediation
+Priority: HIGH
+
+Estimated Fix Time: 1 day
+
+Steps to Fix:
+Validate quantity is a positive integer
+Implement server-side quantity checks
+Set maximum quantity limits
+Reject negative values immediately
+Log suspicious quantity attempts
+Implement cart validation before checkout
+📊 Code Comparison:
+❌ Vulnerable Code
+Copy
+# E-commerce Application - VULNERABLE
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/cart/add', methods=['POST'])
+def add_to_cart():
+    item_price = 50.00
+    # VULNERABLE: No quantity validation
+    quantity = int(request.json.get('quantity'))
+    total_price = item_price * quantity
+    
+    # Negative quantity results in negative total!
+    # Example: quantity=-5 → total_price=-250.00
+    # User gets REFUND instead of being charged
+    
+    return jsonify({
+        "quantity": quantity,
+        "total": total_price
+    })
+✅ Solution Code
+Copy
+# E-commerce Application - SECURE
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/cart/add', methods=['POST'])
+def add_to_cart():
+    item_price = 50.00
+    # SECURE: Validate quantity
+    quantity = int(request.json.get('quantity', 0))
+    
+    # Reject negative values
+    if quantity < 1:
+        return jsonify({"error": "Quantity must be positive"}), 400
+    
+    # Set maximum limit
+    if quantity > 100:
+        return jsonify({"error": "Maximum quantity is 100"}), 400
+    
+    total_price = item_price * quantity
+    
+    # Double-check total is positive
+    if total_price <= 0:
+        return jsonify({"error": "Invalid total"}), 400
+    
+    return jsonify({
+        "quantity": quantity,
+        "total": total_price
+    })
+📚 References:
+OWASP Business Logic Vulnerabilities
+CWE-840: Business Logic Errors
+https://owasp.org/www-community/vulnerabilities/Business_logic_vulnerability
