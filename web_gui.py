@@ -6,6 +6,7 @@ Provides a web interface to manage API keys and AI provider settings
 
 import os
 import json
+import threading
 from pathlib import Path
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
@@ -20,6 +21,8 @@ CONFIG_DIR = Path('config')
 CONFIG_DIR.mkdir(exist_ok=True)
 
 load_dotenv()
+
+scan_status = {}
 
 @app.route('/')
 def index():
@@ -218,34 +221,19 @@ def validate_url(url):
     except Exception as e:
         return False, f"Invalid URL: {str(e)}"
 
-@app.route('/api/scan', methods=['POST'])
-def start_scan():
-    """Start a vulnerability scan"""
-    import threading
+def run_scan_background(scan_id, target_url):
+    """Run scan in background thread"""
     import uuid
     from datetime import datetime
-    
-    data = request.json
-    target_url = data.get('url', '').strip()
-    
-    if not target_url:
-        return jsonify({'success': False, 'message': 'URL is required'}), 400
-    
-    is_valid, message = validate_url(target_url)
-    if not is_valid:
-        return jsonify({'success': False, 'message': message}), 400
-    
-    target_url = message
+    from core.scanner_engine import ScannerEngine
+    from utils.config_loader import ConfigLoader
+    from ai_providers.provider_manager import AIProviderManager
     
     try:
-        scan_id = str(uuid.uuid4())[:8]
-        
-        from core.scanner_engine import ScannerEngine
-        from utils.config_loader import ConfigLoader
-        from ai_providers.provider_manager import AIProviderManager
+        scan_status[scan_id]['status'] = 'running'
+        scan_status[scan_id]['message'] = 'Initializing scanner...'
         
         config = ConfigLoader.load('config/config.yaml')
-        
         scanner_config = config.get('scanner', {})
         ai_provider = scanner_config.get('ai_provider', 'openai')
         depth = scanner_config.get('default_depth', 2)
@@ -253,6 +241,8 @@ def start_scan():
         
         ai_manager = AIProviderManager(config)
         ai_manager.set_provider(ai_provider)
+        
+        scan_status[scan_id]['message'] = 'Starting scan...'
         
         scanner = ScannerEngine(
             target_url=target_url,
@@ -291,20 +281,68 @@ def start_scan():
         with open(scan_file, 'w') as f:
             json.dump(scan_data, f, indent=2)
         
-        return jsonify({
-            'success': True,
-            'scan_id': scan_id,
-            'results': {
-                'target_url': target_url,
-                'vulnerabilities': vulnerabilities,
-                'total_vulnerabilities': len(vulnerabilities)
-            }
-        })
+        scan_status[scan_id]['status'] = 'completed'
+        scan_status[scan_id]['message'] = f'Scan completed! Found {len(vulnerabilities)} vulnerabilities'
+        scan_status[scan_id]['results'] = {
+            'target_url': target_url,
+            'vulnerabilities': vulnerabilities,
+            'total_vulnerabilities': len(vulnerabilities)
+        }
         
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return jsonify({'success': False, 'message': f'Scan failed: {str(e)}'}), 500
+        scan_status[scan_id]['status'] = 'failed'
+        scan_status[scan_id]['message'] = f'Scan failed: {str(e)}'
+
+@app.route('/api/scan', methods=['POST'])
+def start_scan():
+    """Start a vulnerability scan in background"""
+    import uuid
+    
+    data = request.json
+    target_url = data.get('url', '').strip()
+    
+    if not target_url:
+        return jsonify({'success': False, 'message': 'URL is required'}), 400
+    
+    is_valid, message = validate_url(target_url)
+    if not is_valid:
+        return jsonify({'success': False, 'message': message}), 400
+    
+    target_url = message
+    scan_id = str(uuid.uuid4())[:8]
+    
+    scan_status[scan_id] = {
+        'status': 'starting',
+        'message': 'Scan queued...',
+        'results': None
+    }
+    
+    thread = threading.Thread(target=run_scan_background, args=(scan_id, target_url))
+    thread.daemon = True
+    thread.start()
+    
+    return jsonify({
+        'success': True,
+        'scan_id': scan_id,
+        'message': 'Scan started in background. Use /api/scan-progress/<scan_id> to check progress.'
+    })
+
+@app.route('/api/scan-progress/<scan_id>', methods=['GET'])
+def get_scan_progress(scan_id):
+    """Get current scan progress"""
+    if scan_id not in scan_status:
+        return jsonify({'success': False, 'message': 'Scan not found'}), 404
+    
+    status = scan_status[scan_id]
+    return jsonify({
+        'success': True,
+        'scan_id': scan_id,
+        'status': status['status'],
+        'message': status['message'],
+        'results': status.get('results')
+    })
 
 @app.route('/api/scans/<scan_id>', methods=['GET'])
 def get_scan_results(scan_id):
