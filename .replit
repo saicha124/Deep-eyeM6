@@ -1,4 +1,4 @@
-modules = ["bash", "python-3.11"]
+modules = ["web", "bash", "python-3.11"]
 [agent]
 expertMode = true
 
@@ -27,7 +27,7 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python deep_eye.py --version"
+args = "python deep_eye.py --help"
 
 [[ports]]
 localPort = 8888
