@@ -128,9 +128,15 @@ class ReportGenerator:
             logger.warning(f"Could not load CERIST logo: {e}")
             cerist_logo_base64 = ""
         
-        # Enhance vulnerabilities with detailed remediation
+        # Get vulnerabilities and deduplicate
         vulnerabilities = results.get('vulnerabilities', [])
-        enhanced_vulns = [RemediationGuide.enhance_vulnerability(v.copy()) for v in vulnerabilities]
+        deduplicated_vulns = self._deduplicate_vulnerabilities(vulnerabilities)
+        
+        # Enhance vulnerabilities with detailed remediation
+        enhanced_vulns = [RemediationGuide.enhance_vulnerability(v.copy()) for v in deduplicated_vulns]
+        
+        # Recalculate severity counts after deduplication
+        severity_counts = self._recalculate_severity_counts(enhanced_vulns)
         
         # Prepare data for template with translations
         t = self.translator
@@ -139,9 +145,9 @@ class ReportGenerator:
             'generated_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'target': results.get('target'),
             'scan_duration': results.get('duration'),
-            'summary': self._generate_summary(results),
+            'summary': self._generate_summary(enhanced_vulns, severity_counts),
             'vulnerabilities': self._sort_vulnerabilities(enhanced_vulns),
-            'severity_counts': results.get('severity_summary', {}),
+            'severity_counts': severity_counts,
             'urls_scanned': results.get('urls_crawled', 0),
             'reconnaissance': results.get('reconnaissance', {}),
             'cerist_logo': cerist_logo_base64,
@@ -188,6 +194,59 @@ class ReportGenerator:
         
         logger.info(f"HTML report generated: {output_path} (Language: {self.translator.language})")
     
+    def _deduplicate_vulnerabilities(self, vulnerabilities: List[Dict]) -> List[Dict]:
+        """
+        Remove duplicate vulnerabilities based on type, URL, and parameter.
+        Keeps the first occurrence of each unique vulnerability.
+        """
+        seen = set()
+        unique_vulns = []
+        
+        for vuln in vulnerabilities:
+            # Create a unique key based on vulnerability type, URL, and parameter
+            # Safely handle None values by converting to empty string before lowercasing
+            vuln_key = (
+                (vuln.get('type') or '').lower(),
+                (vuln.get('url') or '').lower(),
+                (vuln.get('parameter') or '').lower()
+            )
+            
+            if vuln_key not in seen:
+                seen.add(vuln_key)
+                unique_vulns.append(vuln)
+        
+        removed_count = len(vulnerabilities) - len(unique_vulns)
+        if removed_count > 0:
+            logger.info(f"Removed {removed_count} duplicate vulnerabilities from report")
+        
+        return unique_vulns
+    
+    def _recalculate_severity_counts(self, vulnerabilities: List[Dict]) -> Dict:
+        """Recalculate severity counts after deduplication."""
+        severity_counts = {
+            'critical': 0,
+            'high': 0,
+            'medium': 0,
+            'low': 0,
+            'info': 0
+        }
+        
+        for vuln in vulnerabilities:
+            severity = vuln.get('severity', 'info').lower()
+            if severity in severity_counts:
+                severity_counts[severity] += 1
+        
+        return severity_counts
+    
+    def _extract_vulnerability_types(self, vulnerabilities: List[Dict]) -> List[str]:
+        """Extract unique vulnerability types from the vulnerability list."""
+        types = set()
+        for vuln in vulnerabilities:
+            vuln_type = vuln.get('type', 'Unknown')
+            if vuln_type:
+                types.add(vuln_type)
+        return sorted(list(types))
+    
     def _generate_vulnerability_digest(self, results: Dict, original_output_path: str):
         """Generate a separate HTML vulnerability digest showing all vulnerabilities with code snippets."""
         # Read the vulnerability digest template
@@ -223,16 +282,26 @@ class ReportGenerator:
         except Exception as e:
             logger.warning(f"Could not load CERIST logo for digest: {e}")
         
-        # Enhance vulnerabilities with detailed remediation
+        # Get vulnerabilities and deduplicate
         vulnerabilities = results.get('vulnerabilities', [])
-        enhanced_vulns = [RemediationGuide.enhance_vulnerability(v.copy()) for v in vulnerabilities]
+        deduplicated_vulns = self._deduplicate_vulnerabilities(vulnerabilities)
+        
+        # Enhance vulnerabilities with detailed remediation
+        enhanced_vulns = [RemediationGuide.enhance_vulnerability(v.copy()) for v in deduplicated_vulns]
+        
+        # Extract unique vulnerability types for filtering
+        vulnerability_types = self._extract_vulnerability_types(enhanced_vulns)
+        
+        # Recalculate severity counts after deduplication
+        severity_counts = self._recalculate_severity_counts(enhanced_vulns)
         
         # Prepare data for template
         digest_data = {
             'target': results.get('target', 'Unknown'),
             'generated_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'vulnerabilities': self._sort_vulnerabilities(enhanced_vulns),
-            'severity_counts': results.get('severity_summary', {}),
+            'vulnerability_types': vulnerability_types,
+            'severity_counts': severity_counts,
             'cerist_logo': cerist_logo_base64,
         }
         
@@ -287,10 +356,16 @@ class ReportGenerator:
             from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
             from xml.sax.saxutils import escape
             
-            # Enhance vulnerabilities with detailed remediation
+            # Get vulnerabilities and deduplicate
             vulnerabilities = results.get('vulnerabilities', [])
-            enhanced_vulns = [RemediationGuide.enhance_vulnerability(v.copy()) for v in vulnerabilities]
+            deduplicated_vulns = self._deduplicate_vulnerabilities(vulnerabilities)
+            
+            # Enhance vulnerabilities with detailed remediation
+            enhanced_vulns = [RemediationGuide.enhance_vulnerability(v.copy()) for v in deduplicated_vulns]
             results['vulnerabilities'] = enhanced_vulns
+            
+            # Recalculate severity counts after deduplication
+            results['severity_summary'] = self._recalculate_severity_counts(enhanced_vulns)
             
             # Create PDF document
             doc = SimpleDocTemplate(output_path, pagesize=letter)
@@ -430,7 +505,7 @@ class ReportGenerator:
             
             # Executive Summary (with translation)
             story.append(Paragraph(t.get('executive_summary'), heading_style))
-            summary_text = self._generate_summary(results)
+            summary_text = self._generate_summary(enhanced_vulns, results['severity_summary'])
             story.append(Paragraph(summary_text.replace('\n', '<br/>'), styles['BodyText']))
             story.append(Spacer(1, 0.3*inch))
             
@@ -541,10 +616,15 @@ class ReportGenerator:
             self._generate_html(results, html_path)
             logger.info(f"HTML report available at: {html_path}")
     
-    def _generate_summary(self, results: Dict) -> str:
-        """Generate executive summary with multi-language support."""
-        total_vulns = len(results.get('vulnerabilities', []))
-        severity_counts = results.get('severity_summary', {})
+    def _generate_summary(self, vulnerabilities: List[Dict], severity_counts: Dict) -> str:
+        """
+        Generate executive summary with multi-language support.
+        
+        Args:
+            vulnerabilities: List of (deduplicated) vulnerabilities
+            severity_counts: Severity counts (post-deduplication)
+        """
+        total_vulns = len(vulnerabilities)
         t = self.translator
         
         # Get base summary text with formatting
