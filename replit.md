@@ -10,10 +10,11 @@ I prefer iterative development with clear, concise communication. Please ask bef
 Deep Eye is a command-line security testing tool written in Python 3.11. Its core engine is designed for AI-powered vulnerability detection.
 
 **UI/UX Decisions:**
-- **Web GUI:** Modern web interface with two main pages:
+- **Web GUI:** Modern web interface with three main pages:
   - **Settings Page:** Manage AI provider API keys and settings, featuring a beautiful gradient design, master AI toggle, individual provider controls, and secure encrypted key storage.
-  - **Scanner Page:** User-friendly interface for entering target URLs, initiating scans, viewing real-time results, and downloading professional HTML reports.
-- **Navigation:** Seamless navigation between Settings and Scanner pages via header links.
+  - **Scanner Page:** User-friendly interface for entering target URLs, initiating scans, viewing real-time progress with percentage and vulnerability count, and exporting reports in multiple formats (HTML, JSON, CSV).
+  - **Report Viewer Page:** Browse all historical scan reports with metadata, view detailed vulnerability information in modal dialogs, and export past scans in any format.
+- **Navigation:** Seamless navigation between Settings, Scanner, and Report pages via header links.
 - **Scan Results Display:** Interactive vulnerability cards with color-coded severity badges (Critical, High, Medium, Low), summary statistics dashboard, and expandable details.
 - **Report Design:** Professional, clean design with gradient backgrounds, white content cards, and a focus on readability.
 - **Vulnerability Digest:** Features interactive expandable/collapsible cards, color-coded severity badges, and copy-to-clipboard functionality for code blocks.
@@ -39,11 +40,13 @@ Deep Eye is a command-line security testing tool written in Python 3.11. Its cor
 - **Web GUI:** Flask-based web interface (`web_gui.py`) with comprehensive functionality:
   - Settings management for AI provider API keys with connection testing
   - Scanner interface for entering URLs and initiating vulnerability scans
+  - Real-time progress tracking with live percentage and vulnerability count updates
   - Real-time scan results display with interactive vulnerability cards
   - JSON storage of scan results in `reports/` directory
-  - HTML report generation and download functionality
+  - Multi-format report export (HTML, JSON, CSV)
+  - Historical scan report viewer with modal detail dialogs
   - SSRF protection with DNS resolution and private IP blocking
-  - RESTful API endpoints: POST /api/scan, GET /api/scans/<scan_id>, GET /api/download-report/<scan_id>
+  - RESTful API endpoints: POST /api/scan, GET /api/scans, GET /api/scans/<scan_id>, GET /api/download-report/<scan_id>, GET /api/export/<scan_id>/<format>
 - **Automated Code Snippet Extraction:** Automatically extracts and displays relevant scanner code snippets in reports, showing exactly how vulnerabilities were detected.
 - **Standardized Vulnerability Schema:** A well-defined schema for vulnerability attributes, including timestamps, priority levels, fix time estimates, and references.
 
@@ -74,6 +77,28 @@ Deep Eye is a command-line security testing tool written in Python 3.11. Its cor
 - **Interactive Results Display**: Vulnerability cards with severity badges, summary statistics, and expandable details
 - **Navigation**: Added header navigation between Settings and Scanner pages
 - **Report Downloads**: HTML report generation and download functionality
+
+### Session 3: Real-time Progress & Report Viewer
+- **Real-time Progress Tracking**: Enhanced scanner engine with progress callbacks that update UI in real-time during scans
+  - Live percentage completion (0-100%)
+  - Live vulnerability count updates
+  - Status messages showing current scanning phase (crawling, scanning modules)
+  - Progress bar visual feedback synchronized with backend scanning process
+- **Interactive Report Viewer**: New `/report` page listing all historical scan reports
+  - Displays scan metadata: target URL, timestamp, scan ID, vulnerability count
+  - Click-to-view detailed vulnerability information in modal dialogs
+  - Empty state handling when no scans exist
+  - Deterministic ordering by timestamp (newest first)
+- **Multi-format Export**: Added export functionality in HTML, JSON, and CSV formats
+  - Export buttons on scanner page (appear after scan completion)
+  - Export buttons on report viewer for all historical scans
+  - New API endpoint: GET /api/export/<scan_id>/<format>
+  - CSV export includes all vulnerability details in tabular format
+  - JSON export provides complete structured data for integration
+- **Enhanced API**: Updated REST API with new endpoints
+  - GET /api/scans - Lists all available scan reports with metadata
+  - GET /api/export/<scan_id>/<format> - Exports reports in JSON or CSV
+  - Proper error handling and existence checks for all endpoints
 
 ## Known Limitations
 - **DNS Rebinding Protection**: While URL validation resolves DNS and blocks private IPs at validation time, there's a theoretical TOCTOU (time-of-check/time-of-use) gap where DNS could change between validation and the actual scan. Complete mitigation would require modifying the core scanner engine to use validated IPs directly.
