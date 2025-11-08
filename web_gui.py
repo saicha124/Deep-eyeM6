@@ -259,13 +259,13 @@ def run_scan_background(scan_id, target_url):
             threads=threads
         )
         
-        scan_status[scan_id]['message'] = 'Scanning for vulnerabilities...'
-        scan_status[scan_id]['progress'] = 50
+        scan_status[scan_id]['message'] = 'Crawling website and scanning for vulnerabilities... (This may take a few minutes)'
+        scan_status[scan_id]['progress'] = 40
         
         results = scanner.scan()
         
-        scan_status[scan_id]['message'] = 'Processing results...'
-        scan_status[scan_id]['progress'] = 80
+        scan_status[scan_id]['message'] = 'Processing and analyzing results...'
+        scan_status[scan_id]['progress'] = 90
         
         vulnerabilities = []
         for vuln in results.get('vulnerabilities', []):
