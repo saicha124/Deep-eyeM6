@@ -100,5 +100,21 @@ Deep Eye is a command-line security testing tool written in Python 3.11. Its cor
   - GET /api/export/<scan_id>/<format> - Exports reports in JSON or CSV
   - Proper error handling and existence checks for all endpoints
 
+### Session 4: Grouped Reports & Scan History (November 2025)
+- **Grouped Report View**: Reports page now groups scans by target URL, showing only the latest scan per URL
+  - Scan count badge displays the total number of scans for each URL
+  - Cleaner, more organized view that reduces clutter when multiple scans exist for the same URL
+- **Scan History Feature**: Added "View Scan History" button for URLs with multiple scans
+  - Interactive modal dialog displays all historical scans for a specific URL
+  - Each history entry shows scan ID, timestamp, vulnerability count, and action buttons
+  - Full export capabilities (HTML, JSON, CSV) for all historical scans
+- **New API Endpoints**:
+  - GET /api/scans/grouped - Returns scans grouped by URL with only the latest scan and scan count
+  - POST /api/scans/history - Retrieves complete scan history for a specific URL
+- **Improved Error Handling**: Enhanced modal feedback with loading states and error messages
+- **Git Configuration**: Updated .gitignore to track template files while excluding generated reports
+  - Templates (templates/*.html) are now version controlled
+  - Generated reports (reports/*.html, reports/*.json, reports/*.pdf) remain excluded
+
 ## Known Limitations
 - **DNS Rebinding Protection**: While URL validation resolves DNS and blocks private IPs at validation time, there's a theoretical TOCTOU (time-of-check/time-of-use) gap where DNS could change between validation and the actual scan. Complete mitigation would require modifying the core scanner engine to use validated IPs directly.
