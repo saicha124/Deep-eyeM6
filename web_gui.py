@@ -165,6 +165,49 @@ def report():
     """Render the detailed report page"""
     return render_template('report.html')
 
+@app.route('/view-report/<scan_id>')
+def view_detailed_report(scan_id):
+    """View detailed vulnerability report using the digest template"""
+    from datetime import datetime
+    try:
+        scan_file = Path('reports') / f'scan_{scan_id}.json'
+        
+        if not scan_file.exists():
+            return f"Scan report not found: {scan_id}", 404
+        
+        with open(scan_file, 'r') as f:
+            scan_data = json.load(f)
+        
+        vulnerabilities = scan_data.get('vulnerabilities', [])
+        target_url = scan_data.get('target_url', 'Unknown')
+        timestamp = scan_data.get('timestamp', datetime.now().isoformat())
+        
+        severity_counts = {'critical': 0, 'high': 0, 'medium': 0, 'low': 0, 'info': 0}
+        vulnerability_types = set()
+        
+        for vuln in vulnerabilities:
+            severity = (vuln.get('severity', 'info')).lower()
+            if severity in severity_counts:
+                severity_counts[severity] += 1
+            
+            vuln_type = vuln.get('name', vuln.get('type', 'Unknown'))
+            vulnerability_types.add(vuln_type)
+            
+            if 'type' not in vuln and 'name' in vuln:
+                vuln['type'] = vuln['name']
+        
+        return render_template(
+            'vulnerability_digest.html',
+            target=target_url,
+            generated_date=timestamp,
+            vulnerabilities=vulnerabilities,
+            severity_counts=severity_counts,
+            vulnerability_types=sorted(vulnerability_types),
+            cerist_logo=''
+        )
+    except Exception as e:
+        return f"Error loading report: {str(e)}", 500
+
 def validate_url(url):
     """
     Validate and sanitize URL to prevent SSRF and other attacks
